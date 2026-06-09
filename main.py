@@ -7,6 +7,7 @@ from src.train import train_and_log
 
 
 def main():
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
     mlflow.set_experiment("classification-comparison")
 
     df = load_data()
