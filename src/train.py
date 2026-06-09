@@ -16,13 +16,20 @@ from sklearn.metrics import (
 
 def train_and_log(model_name, model, X_train, X_test, y_train, y_test) -> dict:
     with mlflow.start_run(run_name=model_name):
-        mlflow.log_params(model.get_params())
-
         model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
+
+        # For GridSearchCV log the winning params; otherwise log the model's own params
+        if hasattr(model, "best_params_"):
+            mlflow.log_params(model.best_params_)
+            estimator = model.best_estimator_
+        else:
+            mlflow.log_params(model.get_params())
+            estimator = model
+
+        y_pred = estimator.predict(X_test)
         y_proba = (
-            model.predict_proba(X_test)[:, 1]
-            if hasattr(model, "predict_proba")
+            estimator.predict_proba(X_test)[:, 1]
+            if hasattr(estimator, "predict_proba")
             else None
         )
 
@@ -36,7 +43,7 @@ def train_and_log(model_name, model, X_train, X_test, y_train, y_test) -> dict:
         loggable = {k: v for k, v in metrics.items() if v is not None}
         mlflow.log_metrics(loggable)
 
-        mlflow.sklearn.log_model(model, artifact_path="model")
+        mlflow.sklearn.log_model(estimator, artifact_path="model")
 
         cm = confusion_matrix(y_test, y_pred)
         fig, ax = plt.subplots()

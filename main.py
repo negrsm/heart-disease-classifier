@@ -2,7 +2,7 @@ import pandas as pd
 import mlflow
 
 from src.data_loader import load_data, split_data
-from src.models import get_models
+from src.models import get_models, get_tuned_model
 from src.train import train_and_log
 
 
@@ -17,6 +17,9 @@ def main():
     for name, model in get_models().items():
         result = train_and_log(name, model, X_train, X_test, y_train, y_test)
         results.append(result)
+
+    result = train_and_log("random_forest_tuned", get_tuned_model(), X_train, X_test, y_train, y_test)
+    results.append(result)
 
     summary = (
         pd.DataFrame(results)
